@@ -182,4 +182,11 @@ if __name__ == "__main__":
     canvas[imask] = img2[imask]
     cv2.imshow("result.png", canvas)
     cv2.waitKey(0)
+    
+    
+    
+    https://www.pyimagesearch.com/2017/06/19/image-difference-with-opencv-and-python/
+    https://stackoverflow.com/questions/27035672/cv-extract-differences-between-two-images
+    https://www.programcreek.com/python/example/89428/cv2.absdiff
+    https://docs.opencv.org/2.4.13.7/doc/tutorials/imgproc/histograms/template_matching/template_matching.html
    '''
