@@ -35,7 +35,7 @@ def diff_skit(img1, img2):
     cv2.imshow("Diff", diff)
     cv2.imshow("Thresh", thresh)
     cv2.waitKey(0)
-
+'''ddd'''
 
 def diff_rect(img1, img2, pos=None):
     """find counters include pos in differences between img1 & img2 (cv2 images)"""
