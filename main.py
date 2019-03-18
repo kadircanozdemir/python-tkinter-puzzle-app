@@ -28,7 +28,7 @@ def diff_skit(img1, img2):
         cv2.rectangle(imageB, (x, y), (x + w, y + h), (0, 0, 255), 2)
         i = i + 1
         print(i)
-
+    print(type(imageA))
     # show the output images
     cv2.imshow("Original", imageA)
     cv2.imshow("Modified", imageB)
@@ -127,11 +127,9 @@ def get_match_confidence(img1, img2, mask=None):
 
 
 def main():
-    imageA = cv2.imread('test4.jpg')
-    imageB = cv2.imread('test5.jpg')
-    print(get_match_confidence(imageA, imageB))
-
-    # diff_abs(imageA, imageB)
+    imageA = cv2.imread('karisik1.jpg')
+    imageB = cv2.imread('karisik1.jpg')
+    diff_skit(imageA, imageB)
     print(diff_rect(imageA, imageB))
 
 
