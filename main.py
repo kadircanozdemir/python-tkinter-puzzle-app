@@ -92,15 +92,15 @@ def diff_abs(img1, img2):
 def test_similar(img1, img2):
     h, w, d = img1.shape
     total = h * w * d
-
+    '''
     grayA = cv2.cvtColor(img1, cv2.COLOR_BGR2GRAY)
     grayB = cv2.cvtColor(img2, cv2.COLOR_BGR2GRAY)
     (score, diff) = compare_ssim(grayA, grayB, full=True)
     diff = (diff * 255).astype("uint8")
-
-    # diff = cv2.absdiff(img1, img2)
+    '''
+    diff = cv2.absdiff(img1, img2)
     print(diff)
-    num = (diff < 255).sum()
+    num = (diff < 1).sum()
     return num * 1.0 / total
 
 
@@ -128,7 +128,7 @@ def get_match_confidence(img1, img2, mask=None):
 
 def main():
     imageA = cv2.imread('karisik1.jpg')
-    imageB = cv2.imread('karisik3.jpg')
+    imageB = cv2.imread('karisik4.jpg')
     k = test_similar(imageA, imageB)
     print(k)
 
