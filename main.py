@@ -1,6 +1,10 @@
 import cv2
 import numpy as np
+from tkinter import *
+from tkinter import filedialog
 import random
+
+from MainFrame import MainFrame
 
 
 def chunks(l, n):
@@ -35,10 +39,8 @@ def get_loaction(arr, xy):
 
 
 def main():
-    imageA = cv2.imread('karisik1.jpg')
-    imageB = cv2.imread('karisik2.jpg')
-
-    #mantıksal hatalar
+    # mantıksal hatalar
+    tsetimg = cv2.imread('karisik1.jpg')
     indexes = np.arange(16)
     random.shuffle(indexes)
     j = 0
@@ -49,7 +51,16 @@ def main():
     print(suffled_indexes)
     print(get_loaction(suffled_indexes, 11))
     i, j = get_loaction(suffled_indexes, 11)
-    get_image_piece(imageA, i, j)
+    get_image_piece(tsetimg, i, j)
+    ####
+
+    imageA = cv2.imread("/Users/burakcokyildirim/Desktop/Screen Shot 2019-03-15 at 17.53.51.png")
+    imageB = cv2.imread("/Users/burakcokyildirim/Desktop/Screen Shot 2019-03-15 at 17.53.51.png")
+    root = Tk()
+    app = MainFrame(root)
+    app.pack(fill="both", expand=True)
+    root.mainloop()
+
 
 if __name__ == "__main__":
     main()
