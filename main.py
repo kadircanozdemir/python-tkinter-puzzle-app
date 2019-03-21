@@ -10,19 +10,34 @@ import os
 
 class Tiles():
     def __init__(self):
-        self.tiles = []
+        self.tiles = []
 
-    def add(self,tile):
+    def add(self, tile):
         self.tiles.append(tile)
 
     def shuffle(self):
         random.shuffle(self.tiles)
+        i = 0
+        for row in range(4):
+            for col in range(4):
+                self.tiles[i].pos = (row, col)
+                i += 1
+
+    def show(self):
+        for tile in self.tiles:
+            tile.show()
+
 
 class Tile(Label):
-    def __init__(self, parent, tileImage, pos):
+    def __init__(self, parent, image, pos):
         Label.__init__(self, parent, image=image)
+
         self.image = image
         self.pos = pos
+
+    def show(self):
+        self.grid(row=self.pos[0], column=self.pos[1])
+
 
 class Board(Frame):
     BOARD_SIZE = 400
@@ -30,25 +45,30 @@ class Board(Frame):
     def __init__(self, parent, image, *args, **kwargs):
         Frame.__init__(self, parent, *args, **kwargs)
 
-        self.parent = parent.geometry("500x500")
+        self.parent = parent
         self.image = self.openImage(image)
-        self.tileSize = self.image.size[0]/4
+        self.tileSize = self.image.size[0] / 4
         self.tiles = self.createTiles()
+        self.tiles.shuffle()
+        self.tiles.show()
 
     def openImage(self, image):
         image = Image.open(image)
+        # if min(image.size) > self.BOARD_SIZE:
         image = image.resize((self.BOARD_SIZE, self.BOARD_SIZE), Image.ANTIALIAS)
+        # if image.size[0] != image.size[1]:
+        #     image = image.crop((0, 9, image.size[0], image.size[0]))
         return image
 
     def createTiles(self):
         tiles = Tiles()
         for row in range(4):
             for col in range(4):
-                x0 = row*self.tileSize
-                y0 = col*self.tileSize
-                x1 = x0+self.tileSize
-                y1 = y0+self.tileSize
-                tileImage = self.image.crop((x0, y0, x1, y1))
+                x0 = col * self.tileSize
+                y0 = row * self.tileSize
+                x1 = x0 + self.tileSize
+                y1 = y0 + self.tileSize
+                tileImage = ImageTk.PhotoImage(self.image.crop((x0, y0, x1, y1)))
                 tile = Tile(self, tileImage, (row, col))
                 tiles.add(tile)
         return tiles
