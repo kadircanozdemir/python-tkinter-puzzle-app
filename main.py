@@ -29,11 +29,22 @@ class Tiles():
         for tile in self.tiles:
             tile.show()
 
+    def createBackwardImage(self):
+        new_image = Image.new("RGB", (400, 400))
+        for tile in self.tiles:
+            row, col = tile.pos
+            imageBox = tile.image
+            size = 100
+            new_image.paste(imageBox, (row * size, col * size))
+
+        return new_image
+
 
 class Tile(Label):
-    def __init__(self, parent, image, pos):
-        Label.__init__(self, parent, image=image)
+    def __init__(self, parent, imageTK, image, pos):
+        Label.__init__(self, parent, image=imageTK)
 
+        self.imageTK = imageTK
         self.image = image
         self.pos = pos
 
@@ -51,13 +62,21 @@ class Board(Frame):
         self.image = self.openImage(image)
         self.tileSize = self.image.size[0] / 4
         self.tiles = self.createTiles()
+        # self.tiles.createBackwardImage().save('original.jpg')
         self.tiles.shuffle()
+        self.tiles.createBackwardImage().save('temp.jpg')
+        # rImage = self.tiles.currentImage()
+        # rImage.write('temp.jpg')
+        # self.saveImage(rImage)
         self.tiles.show()
 
     def openImage(self, image):
         image = Image.open(image)
         # if min(image.size) > self.BOARD_SIZE:
         image = image.resize((self.BOARD_SIZE, self.BOARD_SIZE), Image.ANTIALIAS)
+        new_image = Image.new("RGB", (400, 400))
+        new_image.paste(image, (0, 0))
+        new_image.save('original.jpg')
         # if image.size[0] != image.size[1]:
         #     image = image.crop((0, 9, image.size[0], image.size[0]))
         return image
@@ -70,10 +89,14 @@ class Board(Frame):
                 y0 = row * self.tileSize
                 x1 = x0 + self.tileSize
                 y1 = y0 + self.tileSize
-                tileImage = ImageTk.PhotoImage(self.image.crop((x0, y0, x1, y1)))
-                tile = Tile(self, tileImage, (row, col))
+                image = self.image.crop((x0, y0, x1, y1))
+                imageTK = ImageTk.PhotoImage(image)
+                tile = Tile(self, imageTK, image, (row, col))
                 tiles.add(tile)
         return tiles
+
+    def saveImage(self, image):
+        image.save('temp.jpg')
 
 
 class Main():
