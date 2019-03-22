@@ -1,13 +1,14 @@
-import cv2
-import numpy as np
 from tkinter import *
 from tkinter import filedialog
-from PIL import Image, ImageTk, ImageChops
-from tkinter import Entry, Button, OptionMenu
+from PIL import Image, ImageTk
+from tkinter import Entry, Button
 import random
 import cv2
 import numpy as np
 import os
+
+pos1 = None
+pos2 = None
 
 
 class Tiles():
@@ -42,11 +43,12 @@ class Tiles():
 
 class Tile(Label):
     def __init__(self, parent, imageTK, image, pos):
-        Label.__init__(self, parent, image=imageTK)
+        self.label = Label.__init__(self, parent, image=imageTK)
 
         self.imageTK = imageTK
         self.image = image
         self.pos = pos
+        self.parent = parent
 
     def show(self):
         self.grid(row=self.pos[0], column=self.pos[1])
@@ -57,24 +59,41 @@ class Board(Frame):
 
     def __init__(self, parent, image, *args, **kwargs):
         Frame.__init__(self, parent, *args, **kwargs)
-
+        self.correct_pieces = 0
         self.parent = parent
         self.image = self.openImage(image)
         self.tileSize = self.image.size[0] / 4
         self.tiles = self.createTiles()
-        # new_image = Image.new("RGB", (400, 400))
-        # new_image.paste(image, (0, 0))
-        # new_image.save('original.jpg')
-        img = self.tiles.createBackwardImage()
-        img.save('original.jpg')
+        self.original_image = self.tiles.createBackwardImage()
+        self.original_image.save('original.jpg')
         self.tiles.shuffle()
-        img2 = self.tiles.createBackwardImage()
-        img2.save('temp.jpg')
-        print(test_similar(img, img2))
-        # rImage = self.tiles.currentImage()
-        # rImage.write('temp.jpg')
-        # self.saveImage(rImage)
+        self.temp_image = self.tiles.createBackwardImage()
+        self.temp_image.save('temp.jpg')
+        self.correct_pieces = test_similar(self.original_image, self.temp_image)
         self.tiles.show()
+        bottomFrame = Frame(parent)
+        bottomFrame.pack(side=BOTTOM)
+        Button(bottomFrame, text='Karıştır', command=self.shuffleButton).grid(column=0, row=5, pady=10)
+        self.pos = self.tiles.tiles[0].pos
+        # self.tiles.tiles.label.bind("<Button-1>", self.clickBox)
+
+    def clickBox(self):
+        global pos1, pos2
+        if pos1 is None:
+            pos1 = self.pos
+            print(pos1)
+            return
+        if pos2 is None:
+            pos2 = self.pos
+            print(pos2)
+
+    def shuffleButton(self):
+        if self.correct_pieces == 0:
+            self.tiles.shuffle()
+            self.temp_image = self.tiles.createBackwardImage()
+            self.temp_image.save('temp.jpg')
+            self.correct_pieces = test_similar(self.original_image, self.temp_image)
+            self.tiles.show()
 
     def openImage(self, image):
         image = Image.open(image)
@@ -137,14 +156,6 @@ class Main():
             self.board.pack()
 
 
-def chunks(l, n):
-    new_array = []
-    for i in range(n):
-        k = l[0 + i * n:4 + i * n]
-        new_array.append(k)
-    return new_array
-
-
 def test_similar(img1, img2):
     w, h = img1.size
     total = h * w
@@ -158,44 +169,7 @@ def test_similar(img1, img2):
                 counter += 1
     num = counter
     point = int(num * 100.0 / total)
-    return point/6
-
-
-def get_image_piece(img, i, j):
-    # if not (0 < i < 5 | 0 < j < 5): error!
-    try:
-        image_box = img
-        h = image_box.shape[0]
-        box_length = int(h / 4)
-        return image_box[0 + box_length * i:100 + box_length * i, 0 + box_length * j:100 + box_length * j, :]
-    except:
-        print("slice error!")
-
-
-def get_ij(arr, ij):
-    for i in range(0, 4):
-        for j in range(0, 4):
-            if arr[i][j] == ij:
-                return i, j
-
-
-def get_shuffled_image(orj_img, indexes):
-    shuffle_indexes = np.arange(16)
-    random.shuffle(shuffle_indexes)
-    shuffled_indexes = chunks(shuffle_indexes, 4)
-    orginal_indexes = chunks(indexes, 4)
-    # original_image = list()
-    for i in range(0, 4):
-        for j in range(0, 4):
-            point = shuffled_indexes[i][j]
-            r, c = get_ij(orginal_indexes, point)
-            img_box = get_image_piece(orj_img, r, c)
-            # original_image.append(img_box)
-            cv2.imshow("aa", img_box)
-            cv2.waitKey(0)
-    # print(original_image)
-    # cv2.imshow("aa", original_image)
-    # cv2.waitKey(0)
+    return point / 6
 
 
 def main():
@@ -209,11 +183,11 @@ def main():
 
 
 if __name__ == "__main__":
+    # main()
     root = Tk()
     root.title("Puzzle Oyunu")
     Main(root)
     root.mainloop()
-    # main()
     '''
     https://www.pyimagesearch.com/2017/06/19/image-difference-with-opencv-and-python/
     https://stackoverflow.com/questions/27035672/cv-extract-differences-between-two-images
