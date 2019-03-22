@@ -54,7 +54,7 @@ class Tiles():
 
 class Tile(Label):
     def __init__(self, parent, imageTK, image, pos):
-        self.label = Label.__init__(self, parent, image=imageTK,borderwidth=2, relief="raised")
+        self.label = Label.__init__(self, parent, image=imageTK, borderwidth=2, relief="raised")
 
         self.imageTK = imageTK
         self.image = image
@@ -71,7 +71,7 @@ class Board(Frame):
         Frame.__init__(self, parent, *args, **kwargs)
 
         self.correct_pieces = 0
-
+        self.score = 0
         self.parent = parent
         self.image = self.openImage(image)
         self.tileSize = self.image.size[0] / 4
@@ -82,9 +82,13 @@ class Board(Frame):
 
         bottomFrame = Frame(parent)
         bottomFrame.pack(side=BOTTOM)
+        self.shuffleState = Label(bottomFrame, text="Karıştır butonuna basınız")
+        self.shuffleState.grid(column=0, row=5, pady=10, padx=(0, 50))
         self.shuffleButton = Button(bottomFrame, text='Karıştır', command=self.shuffleButtonClick,
-                                    disabledforeground="white").grid(column=0, row=5,
-                                                                     pady=10)
+                                    disabledforeground="white")
+        self.shuffleButton.grid(column=1, row=5, pady=10)
+        self.scoreLabel = Label(bottomFrame, text="Score:")
+        self.scoreLabel.grid(column=2, row=5, pady=10, padx=(100, 50))
         # self.tiles.tiles.label.bind("<Button-1>", self.clickBox)
 
     def clickBox(self, pos, tile):
@@ -103,12 +107,17 @@ class Board(Frame):
         self.tiles.swipe(pos1, pos2)
         self.temp_image = self.tiles.createBackwardImage()
         self.result = test_similar(self.original_image, self.temp_image)
+        if self.correct_pieces == self.result[0]:
+            self.score = self.score - 3.25
+        else:
+            self.score += 6.25 * (self.result[0] - self.correct_pieces)
+
+        self.scoreLabel.configure(text="Score: " + str(self.score))
         self.correct_pieces = self.result[0]
         for i in range(16):
             if self.result[1][i]:
                 self.tiles.tiles[i].unbind("<Button-1>")
                 self.tiles.tiles[i].configure(borderwidth=2, relief="solid")
-                print(i + 1)
         self.tiles.show()
         pos1, pos2 = None, None
 
@@ -117,12 +126,16 @@ class Board(Frame):
             self.tiles.shuffle()
             self.temp_image = self.tiles.createBackwardImage()
             self.result = test_similar(self.original_image, self.temp_image)
+            self.score += 6.25 * (self.result[0] - self.correct_pieces)
+            self.scoreLabel.configure(text="Score: " + str(self.score))
             self.correct_pieces = self.result[0]
+            self.shuffleState.destroy()
+
             for i in range(16):
                 if self.result[1][i]:
                     self.tiles.tiles[i].unbind("<Button-1>")
                     self.tiles.tiles[i].configure(borderwidth=2, relief="solid")
-                    print(i+1)
+                    self.score += 6.25 * self.result[0]
             self.tiles.show()
 
     def openImage(self, image):
@@ -191,13 +204,13 @@ def test_similar(img1, img2):
     corrects = [True] * 16
     for row in range(4):
         for col in range(4):
-            for i in range(row*int(BOARD_SIZE/4), row*int(BOARD_SIZE/4)+int(BOARD_SIZE/4)):
-                for j in range(col*int(BOARD_SIZE/4), col*int(BOARD_SIZE/4)+int(BOARD_SIZE/4)):
+            for i in range(row * int(BOARD_SIZE / 4), row * int(BOARD_SIZE / 4) + int(BOARD_SIZE / 4)):
+                for j in range(col * int(BOARD_SIZE / 4), col * int(BOARD_SIZE / 4) + int(BOARD_SIZE / 4)):
                     r1, g1, b1 = img1.getpixel((i, j))
                     r2, g2, b2 = img2.getpixel((i, j))
                     diff = r1 - r2 + g1 - g2 + b1 - b2
                     if diff != 0:
-                        corrects[col*4+row] = False
+                        corrects[col * 4 + row] = False
     # for i in range(0, BOARD_SIZE):
     #     for j in range(0, BOARD_SIZE):
     #         r1, g1, b1 = img1.getpixel((i, j))
@@ -210,6 +223,7 @@ def test_similar(img1, img2):
     # return point / 6
     count = corrects.count(True)
     return count, corrects
+
 
 def main():
     orj = Image.open('original.jpg')
