@@ -9,6 +9,8 @@ import cv2
 import numpy as np
 import os
 
+pos1 = None
+pos2 = None
 
 class Tiles():
     def __init__(self):
@@ -35,22 +37,22 @@ class Tiles():
             row, col = tile.pos
             imageBox = tile.image
             size = 100
-            new_image.paste(imageBox, (row * size, col * size))
+            new_image.paste(imageBox, (col * size, row * size))
 
         return new_image
 
 
 class Tile(Label):
     def __init__(self, parent, imageTK, image, pos):
-        Label.__init__(self, parent, image=imageTK)
+        self.label = Label.__init__(self, parent, image=imageTK)
 
         self.imageTK = imageTK
         self.image = image
         self.pos = pos
+        self.parent = parent
 
     def show(self):
         self.grid(row=self.pos[0], column=self.pos[1])
-
 
 class Board(Frame):
     BOARD_SIZE = 400
@@ -62,18 +64,34 @@ class Board(Frame):
         self.image = self.openImage(image)
         self.tileSize = self.image.size[0] / 4
         self.tiles = self.createTiles()
-        # self.tiles.createBackwardImage().save('original.jpg')
         self.tiles.shuffle()
         self.tiles.createBackwardImage().save('temp.jpg')
-        # rImage = self.tiles.currentImage()
-        # rImage.write('temp.jpg')
-        # self.saveImage(rImage)
+        self.tiles.show()
+        bottomFrame = Frame(parent)
+        bottomFrame.pack(side=BOTTOM)
+        Button(bottomFrame, text='Karıştır', command=self.shuffleButton).grid(column=0, row=5, pady=10)
+        self.pos = self.tiles.tiles[0].pos
+        self.tiles.tiles..label.bind("<Button-1>", self.clickBox)
+
+    def clickBox(self):
+        global pos1, pos2
+        if pos1 is None:
+            pos1 = self.pos
+            print(pos1)
+            return
+        if pos2 is None:
+            pos2 = self.pos
+            print(pos2)
+
+    def shuffleButton(self):
+        self.tiles.shuffle()
+        self.tiles.createBackwardImage().save('temp.jpg')
         self.tiles.show()
 
     def openImage(self, image):
         image = Image.open(image)
         # if min(image.size) > self.BOARD_SIZE:
-        image = image.resize((self.BOARD_SIZE, self.BOARD_SIZE), Image.ANTIALIAS)
+        image = image.resize((self.BOARD_SIZE, self.BOARD_SIZE), Image.BOX)
         new_image = Image.new("RGB", (400, 400))
         new_image.paste(image, (0, 0))
         new_image.save('original.jpg')
