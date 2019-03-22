@@ -106,18 +106,24 @@ class Board(Frame):
         global pos1, pos2
         self.tiles.swipe(pos1, pos2)
         self.temp_image = self.tiles.createBackwardImage()
-        self.result = test_similar(self.original_image, self.temp_image)
-        if self.correct_pieces == self.result[0]:
-            self.score = self.score - 3.25
-        else:
-            self.score += 6.25 * (self.result[0] - self.correct_pieces)
+        # result: Doğru parça saysı
+        self.result = test_point(self.original_image, self.temp_image)
+        # doğru sayısı aynıysa 3 çıkar
+        if self.correct_pieces == self.result:
+            self.score = self.score - 3.0
+        # doğru sayısı arttıysa 6.25*artış kadar ekle
+        elif self.correct_pieces < self.result:
+            self.score += 6.25 * (self.result - self.correct_pieces)
 
         self.scoreLabel.configure(text="Score: " + str(self.score))
-        self.correct_pieces = self.result[0]
+        self.correct_pieces = self.result
+        #kilitlenicek butanları bul ve kitle
+        self.locks = test_similar(self.original_image, self.temp_image)
         for i in range(16):
-            if self.result[1][i]:
+            if self.locks[1][i]:
                 self.tiles.tiles[i].unbind("<Button-1>")
                 self.tiles.tiles[i].configure(borderwidth=2, relief="solid")
+        ##kilitleme
         self.tiles.show()
         pos1, pos2 = None, None
 
@@ -125,17 +131,19 @@ class Board(Frame):
         if self.correct_pieces == 0:
             self.tiles.shuffle()
             self.temp_image = self.tiles.createBackwardImage()
-            self.result = test_similar(self.original_image, self.temp_image)
-            self.score += 6.25 * (self.result[0] - self.correct_pieces)
+            #result: Doğru parça saysı
+            self.result = test_point(self.original_image, self.temp_image)
+            self.score += 6.25 * (self.result - self.correct_pieces)
             self.scoreLabel.configure(text="Score: " + str(self.score))
-            self.correct_pieces = self.result[0]
+            self.correct_pieces = self.result
             self.shuffleState.destroy()
-
+            # kilitlenicek butanları bul ve kitle
+            self.locks = test_similar(self.original_image, self.temp_image)
             for i in range(16):
-                if self.result[1][i]:
+                if self.locks[1][i]:
                     self.tiles.tiles[i].unbind("<Button-1>")
                     self.tiles.tiles[i].configure(borderwidth=2, relief="solid")
-                    self.score += 6.25 * self.result[0]
+            ##kilitleme bitti
             self.tiles.show()
 
     def openImage(self, image):
@@ -195,6 +203,24 @@ class Main():
             self.board = Board(self.parent, image)
             self.mainFrame.pack_forget()
             self.board.pack()
+
+
+def test_point(img1, img2):
+    w, h = img1.size
+    total = h * w
+    ctr = 0
+    for i in range(0, BOARD_SIZE):
+        for j in range(0, BOARD_SIZE):
+            r1, g1, b1 = img1.getpixel((i, j))
+            r2, g2, b2 = img2.getpixel((i, j))
+            diff = r1 - r2 + g1 - g2 + b1 - b2
+            if diff == 0:
+                ctr += 1
+    num = ctr
+    point = int(num * (BOARD_SIZE / 4.0) / total)
+    correct_cnt = int(point / 6)
+    #return doğru parça sayısı
+    return correct_cnt
 
 
 def test_similar(img1, img2):
