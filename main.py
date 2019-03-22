@@ -2,7 +2,7 @@ import cv2
 import numpy as np
 from tkinter import *
 from tkinter import filedialog
-from PIL import Image, ImageTk
+from PIL import Image, ImageTk, ImageChops
 from tkinter import Entry, Button, OptionMenu
 import random
 import cv2
@@ -35,7 +35,7 @@ class Tiles():
             row, col = tile.pos
             imageBox = tile.image
             size = 100
-            new_image.paste(imageBox, (row * size, col * size))
+            new_image.paste(imageBox, (col * size, row * size))
 
         return new_image
 
@@ -62,9 +62,15 @@ class Board(Frame):
         self.image = self.openImage(image)
         self.tileSize = self.image.size[0] / 4
         self.tiles = self.createTiles()
-        # self.tiles.createBackwardImage().save('original.jpg')
+        # new_image = Image.new("RGB", (400, 400))
+        # new_image.paste(image, (0, 0))
+        # new_image.save('original.jpg')
+        img = self.tiles.createBackwardImage()
+        img.save('original.jpg')
         self.tiles.shuffle()
-        self.tiles.createBackwardImage().save('temp.jpg')
+        img2 = self.tiles.createBackwardImage()
+        img2.save('temp.jpg')
+        print(test_similar(img, img2))
         # rImage = self.tiles.currentImage()
         # rImage.write('temp.jpg')
         # self.saveImage(rImage)
@@ -73,10 +79,8 @@ class Board(Frame):
     def openImage(self, image):
         image = Image.open(image)
         # if min(image.size) > self.BOARD_SIZE:
-        image = image.resize((self.BOARD_SIZE, self.BOARD_SIZE), Image.ANTIALIAS)
-        new_image = Image.new("RGB", (400, 400))
-        new_image.paste(image, (0, 0))
-        new_image.save('original.jpg')
+        image = image.resize((self.BOARD_SIZE, self.BOARD_SIZE), Image.NEAREST)
+
         # if image.size[0] != image.size[1]:
         #     image = image.crop((0, 9, image.size[0], image.size[0]))
         return image
@@ -142,11 +146,19 @@ def chunks(l, n):
 
 
 def test_similar(img1, img2):
-    h, w, d = img1.shape
-    total = h * w * d
-    diff = cv2.absdiff(img1, img2)
-    num = (diff < 1).sum()
-    return num * 100.0 / total
+    w, h = img1.size
+    total = h * w
+    counter = 0
+    for i in range(0, 400):
+        for j in range(0, 400):
+            r1, g1, b1 = img1.getpixel((i, j))
+            r2, g2, b2 = img2.getpixel((i, j))
+            diff = r1 - r2 + g1 - g2 + b1 - b2
+            if diff == 0:
+                counter += 1
+    num = counter
+    point = int(num * 100.0 / total)
+    return point/6
 
 
 def get_image_piece(img, i, j):
@@ -187,18 +199,21 @@ def get_shuffled_image(orj_img, indexes):
 
 
 def main():
-    test_image = cv2.imread('karisik1.jpg')
-    indexes = np.arange(16)
-    print(chunks(indexes, 4))
-    get_shuffled_image(test_image, indexes)
+    orj = Image.open('original.jpg')
+    test = Image.open('temp.jpg')
+    print(test_similar(orj, test))
+    return
+    # indexes = np.arange(16)
+    # print(chunks(indexes, 4))
+    # get_shuffled_image(test_image, indexes)
 
 
 if __name__ == "__main__":
-    # main()
     root = Tk()
     root.title("Puzzle Oyunu")
     Main(root)
     root.mainloop()
+    # main()
     '''
     https://www.pyimagesearch.com/2017/06/19/image-difference-with-opencv-and-python/
     https://stackoverflow.com/questions/27035672/cv-extract-differences-between-two-images
