@@ -3,9 +3,9 @@ from tkinter import filedialog
 from PIL import Image, ImageTk
 from tkinter import Entry, Button
 import random
-import cv2
-import numpy as np
 import os
+
+BOARD_SIZE = 400
 
 pos1 = None
 pos2 = None
@@ -31,14 +31,25 @@ class Tiles():
             tile.show()
 
     def createBackwardImage(self):
-        new_image = Image.new("RGB", (400, 400))
+        new_image = Image.new("RGB", (BOARD_SIZE, BOARD_SIZE))
         for tile in self.tiles:
             row, col = tile.pos
             imageBox = tile.image
-            size = 100
+            size = int(BOARD_SIZE / 4)
             new_image.paste(imageBox, (col * size, row * size))
-
         return new_image
+
+    def swipe(self, pos1, pos2):
+        row1, col1 = pos1
+        row2, col2 = pos2
+
+        temp = self.tiles[row1 * 4 + col1]
+        self.tiles[row1 * 4 + col1] = self.tiles[row2 * 4 + col2]
+        self.tiles[row2 * 4 + col2] = temp
+
+        tempPos = self.tiles[row1 * 4 + col1].pos
+        self.tiles[row1 * 4 + col1].pos = self.tiles[row2 * 4 + col2].pos
+        self.tiles[row2 * 4 + col2].pos = tempPos
 
 
 class Tile(Label):
@@ -55,50 +66,62 @@ class Tile(Label):
 
 
 class Board(Frame):
-    BOARD_SIZE = 400
 
     def __init__(self, parent, image, *args, **kwargs):
         Frame.__init__(self, parent, *args, **kwargs)
+
         self.correct_pieces = 0
+
         self.parent = parent
         self.image = self.openImage(image)
         self.tileSize = self.image.size[0] / 4
         self.tiles = self.createTiles()
+
         self.original_image = self.tiles.createBackwardImage()
         self.original_image.save('original.jpg')
-        self.tiles.shuffle()
-        self.temp_image = self.tiles.createBackwardImage()
-        self.temp_image.save('temp.jpg')
-        self.correct_pieces = test_similar(self.original_image, self.temp_image)
-        self.tiles.show()
+
         bottomFrame = Frame(parent)
         bottomFrame.pack(side=BOTTOM)
-        Button(bottomFrame, text='Karıştır', command=self.shuffleButton).grid(column=0, row=5, pady=10)
-        self.pos = self.tiles.tiles[0].pos
+        self.shuffleButton = Button(bottomFrame, text='Karıştır', command=self.shuffleButtonClick,
+                                    disabledforeground="white").grid(column=0, row=5,
+                                                                     pady=10)
         # self.tiles.tiles.label.bind("<Button-1>", self.clickBox)
 
-    def clickBox(self):
+    def clickBox(self, pos, tile):
         global pos1, pos2
         if pos1 is None:
-            pos1 = self.pos
+            pos1 = pos
             print(pos1)
             return
         if pos2 is None:
-            pos2 = self.pos
+            pos2 = pos
             print(pos2)
+            self.changeBoxes()
 
-    def shuffleButton(self):
+    def changeBoxes(self):
+        global pos1, pos2
+        self.tiles.swipe(pos1, pos2)
+        self.tiles.show()
+        pos1, pos2 = None, None
+
+    def shuffleButtonClick(self):
         if self.correct_pieces == 0:
             self.tiles.shuffle()
             self.temp_image = self.tiles.createBackwardImage()
             self.temp_image.save('temp.jpg')
-            self.correct_pieces = test_similar(self.original_image, self.temp_image)
+            self.result = test_similar(self.original_image, self.temp_image)
+            self.correct_pieces = self.result[0]
+            for i in range(16):
+                if self.result[i]:
+                    self.tiles[i].unbind("<Button-1>")
+                    self.tiles[i].image
+
             self.tiles.show()
 
     def openImage(self, image):
         image = Image.open(image)
         # if min(image.size) > self.BOARD_SIZE:
-        image = image.resize((self.BOARD_SIZE, self.BOARD_SIZE), Image.NEAREST)
+        image = image.resize((BOARD_SIZE, BOARD_SIZE), Image.NEAREST)
 
         # if image.size[0] != image.size[1]:
         #     image = image.crop((0, 9, image.size[0], image.size[0]))
@@ -115,11 +138,9 @@ class Board(Frame):
                 image = self.image.crop((x0, y0, x1, y1))
                 imageTK = ImageTk.PhotoImage(image)
                 tile = Tile(self, imageTK, image, (row, col))
+                tile.bind("<Button-1>", lambda event, tile=tile: self.clickBox(tile.pos, tile))
                 tiles.add(tile)
         return tiles
-
-    def saveImage(self, image):
-        image.save('temp.jpg')
 
 
 class Main():
@@ -158,19 +179,30 @@ class Main():
 
 def test_similar(img1, img2):
     w, h = img1.size
-    total = h * w
-    counter = 0
-    for i in range(0, 400):
-        for j in range(0, 400):
-            r1, g1, b1 = img1.getpixel((i, j))
-            r2, g2, b2 = img2.getpixel((i, j))
-            diff = r1 - r2 + g1 - g2 + b1 - b2
-            if diff == 0:
-                counter += 1
-    num = counter
-    point = int(num * 100.0 / total)
-    return point / 6
-
+    # total = h * w
+    # counter = 0
+    corrects = [True] * 16
+    for row in range(4):
+        for col in range(4):
+            for i in range(row*int(BOARD_SIZE/4), row*int(BOARD_SIZE/4)+int(BOARD_SIZE/4)):
+                for j in range(col*int(BOARD_SIZE/4), col*int(BOARD_SIZE/4)+int(BOARD_SIZE/4)):
+                    r1, g1, b1 = img1.getpixel((i, j))
+                    r2, g2, b2 = img2.getpixel((i, j))
+                    diff = r1 - r2 + g1 - g2 + b1 - b2
+                    if diff != 0:
+                        corrects[col*4+row] = False
+    # for i in range(0, BOARD_SIZE):
+    #     for j in range(0, BOARD_SIZE):
+    #         r1, g1, b1 = img1.getpixel((i, j))
+    #         r2, g2, b2 = img2.getpixel((i, j))
+    #         diff = r1 - r2 + g1 - g2 + b1 - b2
+    #         if diff == 0:
+    #             counter += 1
+    # num = counter
+    # point = int(num * (BOARD_SIZE / 4.0) / total)
+    # return point / 6
+    count = corrects.count(True)
+    return count, corrects
 
 def main():
     orj = Image.open('original.jpg')
