@@ -1,5 +1,6 @@
 from tkinter import *
 from tkinter import filedialog
+from tkinter import messagebox
 from PIL import Image, ImageTk
 from tkinter import Entry, Button
 import random
@@ -80,16 +81,21 @@ class Board(Frame):
         self.original_image = self.tiles.createBackwardImage()
         self.original_image.save('original.jpg')
 
-        bottomFrame = Frame(parent)
-        bottomFrame.pack(side=BOTTOM)
-        self.shuffleState = Label(bottomFrame, text="Karıştır butonuna basınız")
+        self.bottomFrame = Frame(parent)
+        self.bottomFrame.pack(side=BOTTOM)
+        self.shuffleState = Label(self.bottomFrame, text="Karıştır butonuna basınız")
         self.shuffleState.grid(column=0, row=5, pady=10, padx=(0, 50))
-        self.shuffleButton = Button(bottomFrame, text='Karıştır', command=self.shuffleButtonClick,
+        self.shuffleButton = Button(self.bottomFrame, text='Karıştır', command=self.shuffleButtonClick,
                                     disabledforeground="white")
         self.shuffleButton.grid(column=1, row=5, pady=10)
-        self.scoreLabel = Label(bottomFrame, text="Score:")
+        self.scoreLabel = Label(self.bottomFrame, text="Score:")
         self.scoreLabel.grid(column=2, row=5, pady=10, padx=(100, 50))
         # self.tiles.tiles.label.bind("<Button-1>", self.clickBox)
+
+        # En yüksek skorun çekilmesi
+        bestScore = self.getBestScore()
+        self.bestScoreLabel = Label(self.bottomFrame, text="BestScore: " + str(bestScore))
+        self.bestScoreLabel.grid(column=3, row=5, pady=10, padx=(100, 50))
 
     def clickBox(self, pos, tile):
         global pos1, pos2
@@ -129,8 +135,12 @@ class Board(Frame):
             scorestr = "Skor: " + str(self.score) + "\n"
             file1.write(scorestr)
             file1.close()
+            self.bestScoreLabel.configure(text="BestScore: " + str(self.getBestScore()))
         self.tiles.show()
         pos1, pos2 = None, None
+        if self.correct_pieces == 16:
+            self.label = Label(self.bottomFrame, text="Tebrikler Bittirdiniz..").grid(column=0, row=6, pady=10,
+                                                                                      padx=(100, 50))
 
     def shuffleButtonClick(self):
         if self.correct_pieces == 0:
@@ -141,6 +151,12 @@ class Board(Frame):
             self.score += 6.25 * (self.result - self.correct_pieces)
             self.scoreLabel.configure(text="Score: " + str(self.score))
             self.correct_pieces = self.result
+            if self.correct_pieces == 16:
+                file1 = open("enyuksekskor.txt", "a")
+                scorestr = "Skor: " + str(self.score) + "\n"
+                file1.write(scorestr)
+                file1.close()
+                self.bestScoreLabel.configure(text="BestScore: " + str(self.getBestScore()))
             self.shuffleState.destroy()
             # kilitlenicek butanları bul ve kitle
             self.locks = test_similar(self.original_image, self.temp_image)
@@ -150,6 +166,9 @@ class Board(Frame):
                     self.tiles.tiles[i].configure(borderwidth=2, relief="solid")
             ##kilitleme bitti
             self.tiles.show()
+            if self.correct_pieces == 16:
+                self.label = Label(self.bottomFrame, text="Tebrikler Bittirdiniz..").grid(column=0, row=6, pady=10,
+                                                                                          padx=(100, 50))
 
     def openImage(self, image):
         image = Image.open(image)
@@ -174,6 +193,21 @@ class Board(Frame):
                 tile.bind("<Button-1>", lambda event, tile=tile: self.clickBox(tile.pos, tile))
                 tiles.add(tile)
         return tiles
+
+    def getBestScore(self):
+        global content
+        if os.path.exists("enyuksekskor.txt"):
+            file = open("enyuksekskor.txt", "r")
+            skores = []
+            if file is not None:
+                content = file.read()
+                if content is not '':
+                    lines = content.split("\n")
+                    for line in lines:
+                        if line is not '':
+                            skores.append(float(line.split("Skor: ")[1]))
+                    return max(skores)
+        return 0
 
 
 class Main():
