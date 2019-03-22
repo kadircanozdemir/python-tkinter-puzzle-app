@@ -117,13 +117,18 @@ class Board(Frame):
 
         self.scoreLabel.configure(text="Score: " + str(self.score))
         self.correct_pieces = self.result
-        #kilitlenicek butanları bul ve kitle
+        # kilitlenicek butanları bul ve kitle
         self.locks = test_similar(self.original_image, self.temp_image)
         for i in range(16):
             if self.locks[1][i]:
                 self.tiles.tiles[i].unbind("<Button-1>")
                 self.tiles.tiles[i].configure(borderwidth=2, relief="solid")
         ##kilitleme
+        if self.correct_pieces == 16:
+            file1 = open("enyuksekskor.txt", "a")
+            scorestr = "Skor: " + str(self.score) + "\n"
+            file1.write(scorestr)
+            file1.close()
         self.tiles.show()
         pos1, pos2 = None, None
 
@@ -131,7 +136,7 @@ class Board(Frame):
         if self.correct_pieces == 0:
             self.tiles.shuffle()
             self.temp_image = self.tiles.createBackwardImage()
-            #result: Doğru parça saysı
+            # result: Doğru parça saysı
             self.result = test_point(self.original_image, self.temp_image)
             self.score += 6.25 * (self.result - self.correct_pieces)
             self.scoreLabel.configure(text="Score: " + str(self.score))
@@ -219,7 +224,7 @@ def test_point(img1, img2):
     num = ctr
     point = int(num * (BOARD_SIZE / 4.0) / total)
     correct_cnt = int(point / 6)
-    #return doğru parça sayısı
+    # return doğru parça sayısı
     return correct_cnt
 
 
