@@ -54,7 +54,7 @@ class Tiles():
 
 class Tile(Label):
     def __init__(self, parent, imageTK, image, pos):
-        self.label = Label.__init__(self, parent, image=imageTK)
+        self.label = Label.__init__(self, parent, image=imageTK,borderwidth=2, relief="raised")
 
         self.imageTK = imageTK
         self.image = image
@@ -101,6 +101,14 @@ class Board(Frame):
     def changeBoxes(self):
         global pos1, pos2
         self.tiles.swipe(pos1, pos2)
+        self.temp_image = self.tiles.createBackwardImage()
+        self.result = test_similar(self.original_image, self.temp_image)
+        self.correct_pieces = self.result[0]
+        for i in range(16):
+            if self.result[1][i]:
+                self.tiles.tiles[i].unbind("<Button-1>")
+                self.tiles.tiles[i].configure(borderwidth=2, relief="solid")
+                print(i + 1)
         self.tiles.show()
         pos1, pos2 = None, None
 
@@ -108,14 +116,13 @@ class Board(Frame):
         if self.correct_pieces == 0:
             self.tiles.shuffle()
             self.temp_image = self.tiles.createBackwardImage()
-            self.temp_image.save('temp.jpg')
             self.result = test_similar(self.original_image, self.temp_image)
             self.correct_pieces = self.result[0]
             for i in range(16):
-                if self.result[i]:
-                    self.tiles[i].unbind("<Button-1>")
-                    self.tiles[i].image
-
+                if self.result[1][i]:
+                    self.tiles.tiles[i].unbind("<Button-1>")
+                    self.tiles.tiles[i].configure(borderwidth=2, relief="solid")
+                    print(i+1)
             self.tiles.show()
 
     def openImage(self, image):
