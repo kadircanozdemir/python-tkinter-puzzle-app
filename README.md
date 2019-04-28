@@ -1,1 +1,1 @@
-# image-comparison
+# Python Puzzle
